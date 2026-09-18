@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="inquirySQL">
+
+    <!-- ===================== 문의 목록 (페이징 + 검색) ===================== -->
+    <select id="selectInquiryList" parameterType="inquiryVO" resultType="inquiryVO">
+        SELECT
+            inquiry_id,
+            title,
+            writer_id,
+            writer_name,
+            is_secret,
+            status,
+            reg_date,
+            upd_date
+        FROM TB_INQUIRY
+        WHERE del_yn = 'N'
+        <if test="searchKeyword != null and searchKeyword != ''">
+            <choose>
+                <when test="searchType == 'title'">
+                    AND title LIKE CONCAT('%', #{searchKeyword}, '%')
+                </when>
+                <when test="searchType == 'writer'">
+                    AND writer_name LIKE CONCAT('%', #{searchKeyword}, '%')
+                </when>
+                <otherwise>
+                    AND (title       LIKE CONCAT('%', #{searchKeyword}, '%')
+                      OR writer_name LIKE CONCAT('%', #{searchKeyword}, '%'))
+                </otherwise>
+            </choose>
+        </if>
+        ORDER BY inquiry_id DESC
+        LIMIT #{pageSize} OFFSET #{offset}
+    </select>
+
+    <!-- ===================== 문의 전체 건수 ===================== -->
+    <select id="selectInquiryCount" parameterType="inquiryVO" resultType="int">
+        SELECT COUNT(*)
+        FROM TB_INQUIRY
+        WHERE del_yn = 'N'
+        <if test="searchKeyword != null and searchKeyword != ''">
+            <choose>
+                <when test="searchType == 'title'">
+                    AND title LIKE CONCAT('%', #{searchKeyword}, '%')
+                </when>
+                <when test="searchType == 'writer'">
+                    AND writer_name LIKE CONCAT('%', #{searchKeyword}, '%')
+                </when>
+                <otherwise>
+                    AND (title       LIKE CONCAT('%', #{searchKeyword}, '%')
+                      OR writer_name LIKE CONCAT('%', #{searchKeyword}, '%'))
+                </otherwise>
+            </choose>
+        </if>
+    </select>
+
+    <!-- ===================== 문의 상세 조회 ===================== -->
+    <select id="selectInquiry" parameterType="int" resultType="inquiryVO">
+        SELECT
+            inquiry_id,
+            title,
+            content,
+            writer_id,
+            writer_name,
+            is_secret,
+            status,
+            answer,
+            answered_by,
+            answer_date,
+            reg_date,
+            upd_date,
+            del_yn
+        FROM TB_INQUIRY
+        WHERE inquiry_id = #{inquiryId}
+          AND del_yn = 'N'
+    </select>
+
+    <!-- ===================== 문의 등록 ===================== -->
+    <insert id="insertInquiry" parameterType="inquiryVO" useGeneratedKeys="true" keyProperty="inquiryId">
+        INSERT INTO TB_INQUIRY (
+            title,
+            content,
+            writer_id,
+            writer_name,
+            is_secret,
+            status,
+            del_yn,
+            reg_date
+        ) VALUES (
+            #{title},
+            #{content},
+            #{writerId},
+            #{writerName},
+            #{isSecret},
+            '대기',
+            'N',
+            NOW()
+        )
+    </insert>
+
+    <!-- ===================== 문의 수정 ===================== -->
+    <update id="updateInquiry" parameterType="inquiryVO">
+        UPDATE TB_INQUIRY
+        SET
+            title     = #{title},
+            content   = #{content},
+            is_secret = #{isSecret},
+            upd_date  = NOW()
+        WHERE inquiry_id = #{inquiryId}
+          AND del_yn = 'N'
+    </update>
+
+    <!-- ===================== 문의 소프트 삭제 ===================== -->
+    <update id="deleteInquiry" parameterType="int">
+        UPDATE TB_INQUIRY
+        SET del_yn = 'Y'
+        WHERE inquiry_id = #{inquiryId}
+    </update>
+
+    <!-- ===================== 답변 등록 ===================== -->
+    <update id="updateAnswer" parameterType="inquiryVO">
+        UPDATE TB_INQUIRY
+        SET
+            answer      = #{answer},
+            answered_by = #{answeredBy},
+            answer_date = NOW(),
+            status      = '답변완료'
+        WHERE inquiry_id = #{inquiryId}
+          AND del_yn = 'N'
+    </update>
+
+</mapper>

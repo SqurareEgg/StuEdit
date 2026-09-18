@@ -1,0 +1,11 @@
+target/
+bin/
+*.class
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# 실제 API 키가 들어가는 로컬 설정 (예시 파일만 커밋)
+src/main/resources/gemini.properties

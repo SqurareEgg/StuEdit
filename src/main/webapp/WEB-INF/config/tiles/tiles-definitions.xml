@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE tiles-definitions PUBLIC
+    "-//Apache Software Foundation//DTD Tiles Configuration 3.0//EN"
+    "http://tiles.apache.org/dtds/tiles-config_3_0.dtd">
+
+<tiles-definitions>
+
+    <!-- ===================== 기본 레이아웃 템플릿 ===================== -->
+    <definition name="layout" template="/WEB-INF/jsp/common/layout.jsp">
+        <put-attribute name="header"  value="/WEB-INF/jsp/common/header.jsp"/>
+        <put-attribute name="sidebar" value="/WEB-INF/jsp/common/sidebar.jsp"/>
+        <put-attribute name="footer"  value="/WEB-INF/jsp/common/footer.jsp"/>
+        <put-attribute name="body"    value=""/>
+    </definition>
+
+    <!-- ===================== 메인 대시보드 ===================== -->
+    <definition name="main" extends="layout">
+        <put-attribute name="body" value="/WEB-INF/jsp/common/main.jsp"/>
+    </definition>
+
+    <!-- ===================== 학생 관리 ===================== -->
+    <definition name="student/list"   extends="layout">
+        <put-attribute name="body" value="/WEB-INF/jsp/student/studentList.jsp"/>
+    </definition>
+    <definition name="student/detail" extends="layout">
+        <put-attribute name="body" value="/WEB-INF/jsp/student/studentDetail.jsp"/>
+    </definition>
+    <definition name="student/insertForm" extends="layout">
+        <put-attribute name="body" value="/WEB-INF/jsp/student/studentInsertForm.jsp"/>
+    </definition>
+    <definition name="student/updateForm" extends="layout">
+        <put-attribute name="body" value="/WEB-INF/jsp/student/studentUpdateForm.jsp"/>
+    </definition>
+
+    <!-- ===================== 사용자/보안 ===================== -->
+    <!-- 로그인은 레이아웃 없이 단독 페이지 -->
+    <definition name="user/login" template="/WEB-INF/jsp/user/login.jsp"/>
+
+    <definition name="user/mypage" extends="layout">
+        <put-attribute name="body" value="/WEB-INF/jsp/user/mypage.jsp"/>
+    </definition>
+    <definition name="user/pwChange" extends="layout">
+        <put-attribute name="body" value="/WEB-INF/jsp/user/pwChange.jsp"/>
+    </definition>
+
+    <!-- ===================== 성적 관리 ===================== -->
+    <definition name="grade/list" extends="layout">
+        <put-attribute name="body" value="/WEB-INF/jsp/grade/gradeList.jsp"/>
+    </definition>
+    <definition name="grade/insertForm" extends="layout">
+        <put-attribute name="body" value="/WEB-INF/jsp/grade/gradeInsertForm.jsp"/>
+    </definition>
+    <definition name="grade/updateForm" extends="layout">
+        <put-attribute name="body" value="/WEB-INF/jsp/grade/gradeUpdateForm.jsp"/>
+    </definition>
+
+    <!-- ===================== 출결 관리 ===================== -->
+    <definition name="attend/list" extends="layout">
+        <put-attribute name="body" value="/WEB-INF/jsp/attend/attendList.jsp"/>
+    </definition>
+    <definition name="attend/insertForm" extends="layout">
+        <put-attribute name="body" value="/WEB-INF/jsp/attend/attendInsertForm.jsp"/>
+    </definition>
+    <definition name="attend/updateForm" extends="layout">
+        <put-attribute name="body" value="/WEB-INF/jsp/attend/attendInsertForm.jsp"/>
+    </definition>
+
+    <!-- ===================== 공지사항 ===================== -->
+    <definition name="notice/list" extends="layout">
+        <put-attribute name="body" value="/WEB-INF/jsp/notice/noticeList.jsp"/>
+    </definition>
+    <definition name="notice/detail" extends="layout">
+        <put-attribute name="body" value="/WEB-INF/jsp/notice/noticeDetail.jsp"/>
+    </definition>
+    <definition name="notice/insertForm" extends="layout">
+        <put-attribute name="body" value="/WEB-INF/jsp/notice/noticeInsertForm.jsp"/>
+    </definition>
+    <definition name="notice/updateForm" extends="layout">
+        <put-attribute name="body" value="/WEB-INF/jsp/notice/noticeUpdateForm.jsp"/>
+    </definition>
+
+    <!-- ===================== 1:1 문의 ===================== -->
+    <definition name="inquiry/list" extends="layout">
+        <put-attribute name="body" value="/WEB-INF/jsp/inquiry/inquiryList.jsp"/>
+    </definition>
+    <definition name="inquiry/detail" extends="layout">
+        <put-attribute name="body" value="/WEB-INF/jsp/inquiry/inquiryDetail.jsp"/>
+    </definition>
+    <definition name="inquiry/insertForm" extends="layout">
+        <put-attribute name="body" value="/WEB-INF/jsp/inquiry/inquiryInsertForm.jsp"/>
+    </definition>
+    <definition name="inquiry/updateForm" extends="layout">
+        <put-attribute name="body" value="/WEB-INF/jsp/inquiry/inquiryUpdateForm.jsp"/>
+    </definition>
+
+    <!-- ===================== 설문조사 ===================== -->
+    <definition name="survey/list" extends="layout">
+        <put-attribute name="body" value="/WEB-INF/jsp/survey/surveyList.jsp"/>
+    </definition>
+    <definition name="survey/participate" extends="layout">
+        <put-attribute name="body" value="/WEB-INF/jsp/survey/surveyParticipate.jsp"/>
+    </definition>
+    <definition name="survey/result" extends="layout">
+        <put-attribute name="body" value="/WEB-INF/jsp/survey/surveyResult.jsp"/>
+    </definition>
+    <definition name="survey/insertForm" extends="layout">
+        <put-attribute name="body" value="/WEB-INF/jsp/survey/surveyInsertForm.jsp"/>
+    </definition>
+
+    <!-- ===================== 학사 일정 ===================== -->
+    <definition name="schedule/list" extends="layout">
+        <put-attribute name="body" value="/WEB-INF/jsp/schedule/scheduleList.jsp"/>
+    </definition>
+    <definition name="schedule/insertForm" extends="layout">
+        <put-attribute name="body" value="/WEB-INF/jsp/schedule/scheduleInsertForm.jsp"/>
+    </definition>
+    <definition name="schedule/updateForm" extends="layout">
+        <put-attribute name="body" value="/WEB-INF/jsp/schedule/scheduleUpdateForm.jsp"/>
+    </definition>
+
+    <!-- ===================== 챗봇 ===================== -->
+    <definition name="chatbot/chat" extends="layout">
+        <put-attribute name="body" value="/WEB-INF/jsp/chatbot/chat.jsp"/>
+    </definition>
+
+    <!-- ===================== 공통 에러 ===================== -->
+    <definition name="common/error" extends="layout">
+        <put-attribute name="body" value="/WEB-INF/jsp/common/error.jsp"/>
+    </definition>
+
+</tiles-definitions>

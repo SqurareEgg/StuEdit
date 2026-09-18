@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="scheduleSQL">
+
+    <!-- ===================== 학사 일정 목록 (페이징 + 검색) ===================== -->
+    <select id="selectScheduleList" parameterType="scheduleVO" resultType="scheduleVO">
+        SELECT
+            schedule_id,
+            title,
+            content,
+            start_date,
+            end_date,
+            schedule_type,
+            reg_date,
+            del_yn
+        FROM TB_ACADEMIC_SCHEDULE
+        WHERE del_yn = 'N'
+        <if test="searchKeyword != null and searchKeyword != ''">
+            <choose>
+                <when test="searchType == 'type'">
+                    AND schedule_type LIKE CONCAT('%', #{searchKeyword}, '%')
+                </when>
+                <otherwise>
+                    AND title LIKE CONCAT('%', #{searchKeyword}, '%')
+                </otherwise>
+            </choose>
+        </if>
+        ORDER BY start_date ASC
+        LIMIT #{pageSize} OFFSET #{offset}
+    </select>
+
+    <!-- ===================== 학사 일정 전체 건수 ===================== -->
+    <select id="selectScheduleCount" parameterType="scheduleVO" resultType="int">
+        SELECT COUNT(*)
+        FROM TB_ACADEMIC_SCHEDULE
+        WHERE del_yn = 'N'
+        <if test="searchKeyword != null and searchKeyword != ''">
+            <choose>
+                <when test="searchType == 'type'">
+                    AND schedule_type LIKE CONCAT('%', #{searchKeyword}, '%')
+                </when>
+                <otherwise>
+                    AND title LIKE CONCAT('%', #{searchKeyword}, '%')
+                </otherwise>
+            </choose>
+        </if>
+    </select>
+
+    <!-- ===================== 학사 일정 상세 조회 ===================== -->
+    <select id="selectSchedule" parameterType="int" resultType="scheduleVO">
+        SELECT
+            schedule_id,
+            title,
+            content,
+            start_date,
+            end_date,
+            schedule_type,
+            reg_date,
+            del_yn
+        FROM TB_ACADEMIC_SCHEDULE
+        WHERE schedule_id = #{scheduleId}
+          AND del_yn = 'N'
+    </select>
+
+    <!-- ===================== 대시보드: 오늘 이후 일정 5개 ===================== -->
+    <select id="selectUpcomingSchedules" resultType="scheduleVO">
+        SELECT
+            schedule_id,
+            title,
+            start_date,
+            end_date,
+            schedule_type
+        FROM TB_ACADEMIC_SCHEDULE
+        WHERE del_yn = 'N'
+          AND end_date >= CURDATE()
+        ORDER BY start_date ASC
+        LIMIT 5
+    </select>
+
+    <!-- ===================== 학사 일정 등록 ===================== -->
+    <insert id="insertSchedule" parameterType="scheduleVO" useGeneratedKeys="true" keyProperty="scheduleId">
+        INSERT INTO TB_ACADEMIC_SCHEDULE (
+            title,
+            content,
+            start_date,
+            end_date,
+            schedule_type,
+            reg_date,
+            del_yn
+        ) VALUES (
+            #{title},
+            #{content},
+            #{startDate},
+            #{endDate},
+            #{scheduleType},
+            NOW(),
+            'N'
+        )
+    </insert>
+
+    <!-- ===================== 학사 일정 수정 ===================== -->
+    <update id="updateSchedule" parameterType="scheduleVO">
+        UPDATE TB_ACADEMIC_SCHEDULE
+        SET
+            title         = #{title},
+            content       = #{content},
+            start_date    = #{startDate},
+            end_date      = #{endDate},
+            schedule_type = #{scheduleType}
+        WHERE schedule_id = #{scheduleId}
+          AND del_yn = 'N'
+    </update>
+
+    <!-- ===================== 학사 일정 소프트삭제 ===================== -->
+    <update id="deleteSchedule" parameterType="int">
+        UPDATE TB_ACADEMIC_SCHEDULE
+        SET del_yn = 'Y'
+        WHERE schedule_id = #{scheduleId}
+    </update>
+
+</mapper>

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <!--
+        JavaMailSender 빈 설정
+        ─────────────────────────────────────────────────────────────────
+        실제 운영 시 context-common.xml 의 PropertyPlaceholderConfigurer 에
+        mail.* 속성을 추가하거나, 별도 mail.properties 파일을 로드하여
+        ${mail.host} 등 외부화하는 방식을 권장합니다.
+
+        개발 환경 기본값:
+          host     : smtp.gmail.com
+          port     : 587 (STARTTLS)
+          username : 발신 Gmail 계정 (앱 비밀번호 사용)
+          password : 앱 비밀번호 (Google 계정 > 보안 > 앱 비밀번호 생성)
+        ─────────────────────────────────────────────────────────────────
+    -->
+    <bean id="mailSender"
+          class="org.springframework.mail.javamail.JavaMailSenderImpl">
+        <property name="host"     value="${mail.host:smtp.gmail.com}" />
+        <property name="port"     value="${mail.port:587}" />
+        <property name="username" value="${mail.username:your-email@gmail.com}" />
+        <property name="password" value="${mail.password:your-app-password}" />
+        <property name="defaultEncoding" value="UTF-8" />
+        <property name="javaMailProperties">
+            <props>
+                <!-- STARTTLS 활성화 -->
+                <prop key="mail.smtp.auth">true</prop>
+                <prop key="mail.smtp.starttls.enable">true</prop>
+                <prop key="mail.smtp.starttls.required">true</prop>
+                <!-- 연결 타임아웃 (ms) -->
+                <prop key="mail.smtp.connectiontimeout">5000</prop>
+                <prop key="mail.smtp.timeout">5000</prop>
+                <prop key="mail.smtp.writetimeout">5000</prop>
+                <!-- 디버그 (운영 시 false) -->
+                <prop key="mail.debug">false</prop>
+            </props>
+        </property>
+    </bean>
+
+    <!--
+        MimeMessageHelper 를 이용한 HTML 메일 지원을 위해
+        SimpleMailMessage 대신 MimeMessage 를 사용합니다.
+        (MailServiceImpl 에서 mailSender.createMimeMessage() 로 생성)
+    -->
+
+</beans>

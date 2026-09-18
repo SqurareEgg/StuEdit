@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-config.dtd">
+
+<configuration>
+
+    <settings>
+        <!-- 컬럼명 camelCase 자동 매핑 (user_name → userName) -->
+        <setting name="mapUnderscoreToCamelCase" value="true"/>
+        <!-- NULL 값 처리 -->
+        <setting name="jdbcTypeForNull" value="NULL"/>
+        <!-- 지연 로딩 비활성화 -->
+        <setting name="lazyLoadingEnabled" value="false"/>
+    </settings>
+
+    <!--
+        typeAlias: SQL Mapper XML에서 전체 패키지 경로 대신 별칭 사용
+    -->
+    <typeAliases>
+        <!-- 학생 관련 -->
+        <typeAlias alias="studentVO"  type="com.stuedit.vo.StudentVO"/>
+        <!-- 사용자/보안 관련 -->
+        <typeAlias alias="userVO"     type="com.stuedit.vo.UserVO"/>
+        <!-- 성적 관련 -->
+        <typeAlias alias="gradeVO"    type="com.stuedit.vo.GradeVO"/>
+        <!-- 출결 관련 -->
+        <typeAlias alias="attendVO"   type="com.stuedit.vo.AttendVO"/>
+        <!-- 게시판 관련 -->
+        <typeAlias alias="noticeVO"   type="com.stuedit.vo.NoticeVO"/>
+        <!-- 파일 관련 -->
+        <typeAlias alias="fileVO"     type="com.stuedit.vo.FileVO"/>
+        <!-- 1:1 문의 관련 -->
+        <typeAlias alias="inquiryVO"  type="com.stuedit.vo.InquiryVO"/>
+        <!-- 학사 일정 관련 -->
+        <typeAlias alias="scheduleVO" type="com.stuedit.vo.ScheduleVO"/>
+        <!-- 챗봇 관련 -->
+        <typeAlias alias="chatLogVO"  type="com.stuedit.vo.ChatLogVO"/>
+        <!-- 설문조사 관련 -->
+        <typeAlias alias="surveyVO"         type="com.stuedit.vo.SurveyVO"/>
+        <typeAlias alias="surveyQuestionVO" type="com.stuedit.vo.SurveyQuestionVO"/>
+        <typeAlias alias="surveyOptionVO"   type="com.stuedit.vo.SurveyOptionVO"/>
+        <typeAlias alias="surveyResponseVO" type="com.stuedit.vo.SurveyResponseVO"/>
+        <typeAlias alias="surveyAnswerVO"   type="com.stuedit.vo.SurveyAnswerVO"/>
+    </typeAliases>
+
+</configuration>

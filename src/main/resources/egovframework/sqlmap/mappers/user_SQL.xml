@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="userSQL">
+
+    <!-- ===================== 로그인 ID로 사용자 조회 (Spring Security 인증용) ===================== -->
+    <select id="selectUserByLoginId" parameterType="String" resultType="userVO">
+        SELECT
+            user_id,
+            login_id,
+            user_pw,
+            user_name,
+            role,
+            phone,
+            email,
+            use_yn,
+            student_id,
+            reg_date,
+            last_login_date
+        FROM TB_USER
+        WHERE login_id = #{loginId}
+          AND use_yn = 'Y'
+    </select>
+
+    <!-- ===================== PK로 사용자 조회 ===================== -->
+    <select id="selectUser" parameterType="int" resultType="userVO">
+        SELECT
+            user_id,
+            login_id,
+            user_pw,
+            user_name,
+            role,
+            phone,
+            email,
+            use_yn,
+            student_id,
+            reg_date,
+            last_login_date
+        FROM TB_USER
+        WHERE user_id = #{userId}
+          AND use_yn = 'Y'
+    </select>
+
+    <!-- ===================== 사용자 등록 ===================== -->
+    <insert id="insertUser" parameterType="userVO">
+        INSERT INTO TB_USER (
+            login_id,
+            user_pw,
+            user_name,
+            role,
+            phone,
+            email,
+            use_yn,
+            student_id,
+            reg_date
+        ) VALUES (
+            #{loginId},
+            #{userPw},
+            #{userName},
+            #{role},
+            #{phone},
+            #{email},
+            'Y',
+            #{studentId},
+            NOW()
+        )
+    </insert>
+
+    <!-- ===================== 연락처·이메일 수정 (마이페이지) ===================== -->
+    <update id="updateUserInfo" parameterType="userVO">
+        UPDATE TB_USER
+        SET
+            phone = #{phone},
+            email = #{email}
+        WHERE user_id = #{userId}
+          AND use_yn = 'Y'
+    </update>
+
+    <!-- ===================== 비밀번호 변경 ===================== -->
+    <update id="updateUserPw" parameterType="userVO">
+        UPDATE TB_USER
+        SET user_pw = #{userPw}
+        WHERE user_id = #{userId}
+          AND use_yn = 'Y'
+    </update>
+
+    <!-- ===================== 마지막 로그인 시간 갱신 ===================== -->
+    <update id="updateLastLoginDate" parameterType="String">
+        UPDATE TB_USER
+        SET last_login_date = NOW()
+        WHERE login_id = #{loginId}
+    </update>
+
+    <!-- ===================== 로그인 ID 중복 확인 ===================== -->
+    <select id="selectLoginIdCount" parameterType="String" resultType="int">
+        SELECT COUNT(*)
+        FROM TB_USER
+        WHERE login_id = #{loginId}
+    </select>
+
+</mapper>

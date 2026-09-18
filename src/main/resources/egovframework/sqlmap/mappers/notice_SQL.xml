@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="noticeSQL">
+
+    <!-- ===================== 공지사항 목록 (페이징 + 검색) ===================== -->
+    <!--
+        중요 공지(important_yn='Y')를 항상 상단 고정,
+        그 아래는 최신순 정렬
+    -->
+    <select id="selectNoticeList" parameterType="noticeVO" resultType="noticeVO">
+        SELECT
+            n.notice_id,
+            n.title,
+            n.writer,
+            n.view_count,
+            n.important_yn,
+            n.reg_date,
+            n.mod_date,
+            (SELECT COUNT(*) FROM TB_FILE f
+             WHERE f.ref_id = n.notice_id AND f.ref_type = 'NOTICE') AS file_count
+        FROM TB_NOTICE n
+        WHERE n.del_yn = 'N'
+        <if test="searchKeyword != null and searchKeyword != ''">
+            <choose>
+                <when test="searchType == 'title'">
+                    AND n.title LIKE CONCAT('%', #{searchKeyword}, '%')
+                </when>
+                <when test="searchType == 'content'">
+                    AND n.content LIKE CONCAT('%', #{searchKeyword}, '%')
+                </when>
+                <when test="searchType == 'writer'">
+                    AND n.writer LIKE CONCAT('%', #{searchKeyword}, '%')
+                </when>
+                <otherwise>
+                    AND (n.title   LIKE CONCAT('%', #{searchKeyword}, '%')
+                      OR n.content LIKE CONCAT('%', #{searchKeyword}, '%'))
+                </otherwise>
+            </choose>
+        </if>
+        ORDER BY n.important_yn DESC, n.notice_id DESC
+        LIMIT #{pageSize} OFFSET #{offset}
+    </select>
+
+    <!-- ===================== 공지사항 전체 건수 ===================== -->
+    <select id="selectNoticeCount" parameterType="noticeVO" resultType="int">
+        SELECT COUNT(*)
+        FROM TB_NOTICE
+        WHERE del_yn = 'N'
+        <if test="searchKeyword != null and searchKeyword != ''">
+            <choose>
+                <when test="searchType == 'title'">
+                    AND title LIKE CONCAT('%', #{searchKeyword}, '%')
+                </when>
+                <when test="searchType == 'content'">
+                    AND content LIKE CONCAT('%', #{searchKeyword}, '%')
+                </when>
+                <when test="searchType == 'writer'">
+                    AND writer LIKE CONCAT('%', #{searchKeyword}, '%')
+                </when>
+                <otherwise>
+                    AND (title   LIKE CONCAT('%', #{searchKeyword}, '%')
+                      OR content LIKE CONCAT('%', #{searchKeyword}, '%'))
+                </otherwise>
+            </choose>
+        </if>
+    </select>
+
+    <!-- ===================== 공지사항 상세 조회 ===================== -->
+    <select id="selectNotice" parameterType="int" resultType="noticeVO">
+        SELECT
+            notice_id,
+            title,
+            content,
+            writer,
+            view_count,
+            important_yn,
+            del_yn,
+            reg_date,
+            mod_date
+        FROM TB_NOTICE
+        WHERE notice_id = #{noticeId}
+          AND del_yn = 'N'
+    </select>
+
+    <!-- ===================== 조회수 증가 ===================== -->
+    <update id="updateViewCount" parameterType="int">
+        UPDATE TB_NOTICE
+        SET view_count = view_count + 1
+        WHERE notice_id = #{noticeId}
+    </update>
+
+    <!-- ===================== 공지사항 등록 ===================== -->
+    <insert id="insertNotice" parameterType="noticeVO" useGeneratedKeys="true" keyProperty="noticeId">
+        INSERT INTO TB_NOTICE (
+            title,
+            content,
+            writer,
+            view_count,
+            important_yn,
+            del_yn,
+            reg_date
+        ) VALUES (
+            #{title},
+            #{content},
+            #{writer},
+            0,
+            #{importantYn},
+            'N',
+            NOW()
+        )
+    </insert>
+
+    <!-- ===================== 공지사항 수정 ===================== -->
+    <update id="updateNotice" parameterType="noticeVO">
+        UPDATE TB_NOTICE
+        SET
+            title        = #{title},
+            content      = #{content},
+            important_yn = #{importantYn},
+            mod_date     = NOW()
+        WHERE notice_id = #{noticeId}
+          AND del_yn = 'N'
+    </update>
+
+    <!-- ===================== 공지사항 소프트삭제 ===================== -->
+    <update id="deleteNotice" parameterType="int">
+        UPDATE TB_NOTICE
+        SET del_yn = 'Y'
+        WHERE notice_id = #{noticeId}
+    </update>
+
+    <!-- ===================== 대시보드: 전체 공지사항 수 ===================== -->
+    <select id="selectTotalNoticeCount" resultType="int">
+        SELECT COUNT(*) FROM TB_NOTICE WHERE del_yn = 'N'
+    </select>
+
+    <!-- ===================== 이전 글 / 다음 글 (상세 페이지용) ===================== -->
+    <select id="selectPrevNotice" parameterType="int" resultType="noticeVO">
+        SELECT notice_id, title
+        FROM TB_NOTICE
+        WHERE notice_id &lt; #{noticeId}
+          AND del_yn = 'N'
+        ORDER BY notice_id DESC
+        LIMIT 1
+    </select>
+
+    <select id="selectNextNotice" parameterType="int" resultType="noticeVO">
+        SELECT notice_id, title
+        FROM TB_NOTICE
+        WHERE notice_id &gt; #{noticeId}
+          AND del_yn = 'N'
+        ORDER BY notice_id ASC
+        LIMIT 1
+    </select>
+
+</mapper>

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           http://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/tx
+                           http://www.springframework.org/schema/tx/spring-tx.xsd
+                           http://www.springframework.org/schema/aop
+                           http://www.springframework.org/schema/aop/spring-aop.xsd">
+
+    <!-- DataSource 기반 트랜잭션 매니저 -->
+    <bean id="transactionManager"
+          class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+
+    <!--
+        선언적 트랜잭션 어드바이스
+        - insert*, update*, delete*, register*, modify*, remove* : REQUIRED (쓰기)
+        - select*, get*, list*, count*                          : readOnly=true (읽기)
+    -->
+    <tx:advice id="txAdvice" transaction-manager="transactionManager">
+        <tx:attributes>
+            <!-- 쓰기 메서드: 트랜잭션 필수 -->
+            <tx:method name="insert*"   propagation="REQUIRED" rollback-for="Exception"/>
+            <tx:method name="update*"   propagation="REQUIRED" rollback-for="Exception"/>
+            <tx:method name="delete*"   propagation="REQUIRED" rollback-for="Exception"/>
+            <tx:method name="register*" propagation="REQUIRED" rollback-for="Exception"/>
+            <tx:method name="modify*"   propagation="REQUIRED" rollback-for="Exception"/>
+            <tx:method name="remove*"   propagation="REQUIRED" rollback-for="Exception"/>
+            <tx:method name="save*"     propagation="REQUIRED" rollback-for="Exception"/>
+            <!-- 읽기 메서드: 읽기 전용 -->
+            <tx:method name="select*"   propagation="REQUIRED" read-only="true"/>
+            <tx:method name="get*"      propagation="REQUIRED" read-only="true"/>
+            <tx:method name="list*"     propagation="REQUIRED" read-only="true"/>
+            <tx:method name="count*"    propagation="REQUIRED" read-only="true"/>
+            <!-- 그 외 기본 설정 -->
+            <tx:method name="*"         propagation="REQUIRED" rollback-for="Exception"/>
+        </tx:attributes>
+    </tx:advice>
+
+    <!--
+        AOP 포인트컷: com.stuedit.service.impl 패키지의 모든 메서드에 트랜잭션 적용
+    -->
+    <aop:config>
+        <aop:pointcut id="servicePointcut"
+                      expression="execution(* com.stuedit.service.impl..*ServiceImpl.*(..))"/>
+        <aop:advisor advice-ref="txAdvice" pointcut-ref="servicePointcut"/>
+    </aop:config>
+
+</beans>

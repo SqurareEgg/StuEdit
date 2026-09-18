@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:task="http://www.springframework.org/schema/task"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           http://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/context
+                           http://www.springframework.org/schema/context/spring-context.xsd
+                           http://www.springframework.org/schema/task
+                           http://www.springframework.org/schema/task/spring-task.xsd">
+
+    <!--
+        Service, DAO, Component 스캔
+        Controller는 dispatcher-servlet.xml 에서 별도 스캔
+    -->
+    <context:component-scan base-package="com.stuedit">
+        <context:exclude-filter type="annotation"
+            expression="org.springframework.stereotype.Controller"/>
+    </context:component-scan>
+
+    <!-- 프로퍼티 파일 로드 (필요 시 application.properties 추가 가능) -->
+    <!-- <context:property-placeholder location="classpath:/egovframework/egovProps/globals.properties"/> -->
+
+    <!-- eGovFrame 예외 추적 (fdl.cmmn jar 필요 / 없으면 주석 처리) -->
+    <!--
+    <bean id="leaveaTrace" class="egovframework.rte.fdl.cmmn.trace.LeaveaTrace"/>
+    <bean id="traceHandlerService" class="egovframework.rte.fdl.cmmn.trace.manager.DefaultTraceHandleManager">
+        <property name="reqExpMatcher">
+            <bean class="egovframework.rte.fdl.cmmn.trace.util.WildcardExpressionMatcher"/>
+        </property>
+        <property name="patterns"><list><value>*</value></list></property>
+        <property name="handlers">
+            <list><bean class="egovframework.rte.fdl.cmmn.trace.handler.DefaultTraceHandler"/></list>
+        </property>
+    </bean>
+    -->
+
+    <!-- @Async 비동기 메서드 지원 (MailServiceImpl.sendStudentRegistrationMail 등) -->
+    <task:annotation-driven executor="taskExecutor"/>
+    <task:executor id="taskExecutor" pool-size="5"/>
+
+    <!--
+        공통 프로퍼티 설정
+        ─ upload.path : 파일 업로드 저장 경로 (@Value 주입용)
+        ─ mail.*      : SMTP 설정 (@Value 주입용, context-mail.xml 에서 참조)
+        ─ gemini.*    : Gemini API 설정 (classpath:gemini.properties 에서 추가 로드)
+          실제 운영 시 아래 값을 환경에 맞게 수정하거나
+          별도 properties 파일로 외부화하세요.
+    -->
+    <bean id="commonProperties" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <!-- 인라인 프로퍼티 -->
+        <property name="properties">
+            <value>
+                upload.path=C:/upload/studit
+                mail.host=smtp.gmail.com
+                mail.port=587
+                mail.username=your-email@gmail.com
+                mail.password=your-app-password
+                mail.fromName=StuEdit 학생관리시스템
+            </value>
+        </property>
+        <!-- 외부 properties 파일 (gemini.properties) - 파일 없어도 기동 가능 -->
+        <property name="locations">
+            <list>
+                <value>classpath:gemini.properties</value>
+            </list>
+        </property>
+        <property name="ignoreUnresolvablePlaceholders" value="true"/>
+        <property name="ignoreResourceNotFound" value="true"/>
+        <!-- 외부 파일 값이 인라인 값을 덮어쓰도록 설정 -->
+        <property name="localOverride" value="false"/>
+    </bean>
+
+    <!-- RestTemplate: Gemini API 등 외부 HTTP 통신용 -->
+    <bean id="restTemplate" class="org.springframework.web.client.RestTemplate"/>
+
+</beans>

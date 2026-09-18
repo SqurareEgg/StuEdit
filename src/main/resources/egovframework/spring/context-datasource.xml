@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <!-- MySQL DataSource (Apache Commons DBCP2) -->
+    <bean id="dataSource" class="org.apache.commons.dbcp2.BasicDataSource" destroy-method="close">
+        <!-- JDBC 드라이버 -->
+        <property name="driverClassName" value="com.mysql.cj.jdbc.Driver"/>
+        <!-- 접속 URL: student_db, UTF-8, 시간대 설정 -->
+        <property name="url" value="jdbc:mysql://localhost:3306/student_db?useUnicode=true&amp;characterEncoding=UTF-8&amp;serverTimezone=Asia/Seoul&amp;allowPublicKeyRetrieval=true&amp;useSSL=false"/>
+        <property name="username" value="root"/>
+        <property name="password" value="1234"/>
+
+        <!-- 커넥션 풀 설정 -->
+        <property name="initialSize" value="5"/>
+        <property name="maxTotal"   value="20"/>
+        <property name="maxIdle"    value="10"/>
+        <property name="minIdle"    value="5"/>
+        <property name="maxWaitMillis" value="10000"/>
+
+        <!-- 유효성 검사 -->
+        <property name="validationQuery" value="SELECT 1"/>
+        <property name="testOnBorrow"    value="true"/>
+    </bean>
+
+</beans>

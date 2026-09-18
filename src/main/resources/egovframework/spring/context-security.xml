@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:security="http://www.springframework.org/schema/security"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           http://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/security
+                           http://www.springframework.org/schema/security/spring-security.xsd">
+
+    <!-- ===================== BCrypt 비밀번호 인코더 ===================== -->
+    <bean id="bcryptPasswordEncoder"
+          class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder"/>
+
+    <!-- ===================== Role Hierarchy ===================== -->
+    <!-- ROLE_ADMIN은 ROLE_STUDENT 권한을 포함 -->
+    <bean id="roleHierarchy"
+          class="org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl">
+        <property name="hierarchy">
+            <value>ROLE_ADMIN > ROLE_STUDENT</value>
+        </property>
+    </bean>
+
+    <bean id="webExpressionHandler"
+          class="org.springframework.security.web.access.expression.DefaultWebSecurityExpressionHandler">
+        <property name="roleHierarchy" ref="roleHierarchy"/>
+    </bean>
+
+    <!-- ===================== 인증 제공자 ===================== -->
+    <security:authentication-manager id="authenticationManager">
+        <security:authentication-provider user-service-ref="userDetailsService">
+            <!-- BCrypt 인코더로 비밀번호 검증 -->
+            <security:password-encoder ref="bcryptPasswordEncoder"/>
+        </security:authentication-provider>
+    </security:authentication-manager>
+
+    <!-- ===================== HTTP 보안 설정 ===================== -->
+    <security:http auto-config="false"
+                   use-expressions="true"
+                   entry-point-ref="loginUrlAuthenticationEntryPoint">
+
+        <!-- Role Hierarchy 적용 -->
+        <security:expression-handler ref="webExpressionHandler"/>
+
+        <!-- CSRF 토큰 (JSP에서 <sec:csrfInput/> 또는 Hidden 필드로 전달) -->
+        <security:csrf disabled="false"/>
+
+        <!-- ── URL 접근 권한 규칙 ── -->
+        <!-- 정적 리소스: 모두 허용 -->
+        <security:intercept-url pattern="/resources/**"  access="permitAll"/>
+        <!-- 로그인/로그아웃: 모두 허용 -->
+        <security:intercept-url pattern="/user/login.do"  access="permitAll"/>
+        <security:intercept-url pattern="/user/logout.do" access="permitAll"/>
+        <!-- 공지사항 목록·상세: 로그인 사용자 허용 -->
+        <security:intercept-url pattern="/notice/list.do"   access="isAuthenticated()"/>
+        <security:intercept-url pattern="/notice/detail.do" access="isAuthenticated()"/>
+        <!-- 공지사항 등록·수정·삭제: 관리자 전용 -->
+        <security:intercept-url pattern="/notice/insert*.do" access="hasRole('ROLE_ADMIN')"/>
+        <security:intercept-url pattern="/notice/update*.do" access="hasRole('ROLE_ADMIN')"/>
+        <security:intercept-url pattern="/notice/delete*.do" access="hasRole('ROLE_ADMIN')"/>
+        <!-- 학생 관리: 관리자 전용 -->
+        <security:intercept-url pattern="/student/**"    access="hasRole('ROLE_ADMIN')"/>
+        <!-- 성적·출결: 로그인 사용자 -->
+        <security:intercept-url pattern="/grade/**"      access="isAuthenticated()"/>
+        <security:intercept-url pattern="/attend/**"     access="isAuthenticated()"/>
+        <!-- 마이페이지: 로그인 사용자 -->
+        <security:intercept-url pattern="/user/mypage*"  access="isAuthenticated()"/>
+        <!-- 관리자 대시보드: 관리자 전용 -->
+        <security:intercept-url pattern="/admin/**"      access="hasRole('ROLE_ADMIN')"/>
+        <!-- 1:1 문의: 로그인 사용자 -->
+        <security:intercept-url pattern="/inquiry/**"    access="isAuthenticated()"/>
+        <!-- 설문조사: 로그인 사용자 -->
+        <security:intercept-url pattern="/survey/**"     access="isAuthenticated()"/>
+        <!-- 학사 일정: 로그인 사용자 -->
+        <security:intercept-url pattern="/schedule/**"   access="isAuthenticated()"/>
+        <!-- 챗봇: 로그인 사용자 -->
+        <security:intercept-url pattern="/chatbot/**"    access="isAuthenticated()"/>
+        <!-- 그 외 모든 요청: 인증 필요 -->
+        <security:intercept-url pattern="/**"            access="isAuthenticated()"/>
+
+        <!-- ── 로그아웃 설정 ── -->
+        <security:logout
+            logout-url="/user/logout.do"
+            logout-success-url="/user/login.do"
+            invalidate-session="true"
+            delete-cookies="JSESSIONID"/>
+
+        <!-- ── 세션 관리 ── -->
+        <security:session-management>
+            <!-- 동시 로그인 1개 제한 -->
+            <security:concurrency-control
+                max-sessions="1"
+                expired-url="/user/login.do?expired=true"/>
+        </security:session-management>
+
+        <!-- ── 커스텀 필터: 로그인 처리 ── -->
+        <security:custom-filter
+            ref="usernamePasswordAuthenticationFilter"
+            position="FORM_LOGIN_FILTER"/>
+
+    </security:http>
+
+    <!-- ===================== 커스텀 로그인 필터 ===================== -->
+    <bean id="usernamePasswordAuthenticationFilter"
+          class="org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter">
+        <property name="authenticationManager" ref="authenticationManager"/>
+        <property name="filterProcessesUrl"    value="/user/loginProc.do"/>
+        <property name="usernameParameter"     value="userId"/>
+        <property name="passwordParameter"     value="userPw"/>
+        <property name="authenticationSuccessHandler" ref="loginSuccessHandler"/>
+        <property name="authenticationFailureHandler" ref="loginFailureHandler"/>
+    </bean>
+
+    <!-- 로그인 성공 핸들러 (마지막 로그인 시간 갱신 포함) -->
+    <bean id="loginSuccessHandler"
+          class="com.stuedit.common.CustomLoginSuccessHandler"/>
+
+    <!-- 로그인 실패 핸들러 -->
+    <bean id="loginFailureHandler"
+          class="org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler">
+        <property name="defaultFailureUrl" value="/user/login.do?error=true"/>
+    </bean>
+
+    <!-- 미인증 접근 시 로그인 페이지로 리다이렉트 -->
+    <bean id="loginUrlAuthenticationEntryPoint"
+          class="org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint">
+        <constructor-arg value="/user/login.do"/>
+    </bean>
+
+</beans>

@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="gradeSQL">
+
+    <!-- ===================== 성적 목록 조회 (페이징 + 검색) ===================== -->
+    <select id="selectGradeList" parameterType="gradeVO" resultType="gradeVO">
+        SELECT
+            g.grade_id,
+            g.student_id,
+            g.subject_name,
+            g.semester,
+            g.score,
+            g.grade_point,
+            g.credit,
+            g.reg_date,
+            s.student_num,
+            s.student_name,
+            s.dept_name
+        FROM TB_GRADE g
+        INNER JOIN TB_STUDENT s ON g.student_id = s.student_id
+        WHERE s.del_yn = 'N'
+        <if test="studentId != 0">
+            AND g.student_id = #{studentId}
+        </if>
+        <if test="searchKeyword != null and searchKeyword != ''">
+            AND (s.student_name LIKE CONCAT('%', #{searchKeyword}, '%')
+              OR g.subject_name LIKE CONCAT('%', #{searchKeyword}, '%'))
+        </if>
+        <if test="searchSemester != null and searchSemester != ''">
+            AND g.semester = #{searchSemester}
+        </if>
+        ORDER BY g.semester DESC, s.student_num ASC, g.subject_name ASC
+        LIMIT #{pageSize} OFFSET #{offset}
+    </select>
+
+    <!-- ===================== 성적 전체 건수 ===================== -->
+    <select id="selectGradeCount" parameterType="gradeVO" resultType="int">
+        SELECT COUNT(*)
+        FROM TB_GRADE g
+        INNER JOIN TB_STUDENT s ON g.student_id = s.student_id
+        WHERE s.del_yn = 'N'
+        <if test="studentId != 0">
+            AND g.student_id = #{studentId}
+        </if>
+        <if test="searchKeyword != null and searchKeyword != ''">
+            AND (s.student_name LIKE CONCAT('%', #{searchKeyword}, '%')
+              OR g.subject_name LIKE CONCAT('%', #{searchKeyword}, '%'))
+        </if>
+        <if test="searchSemester != null and searchSemester != ''">
+            AND g.semester = #{searchSemester}
+        </if>
+    </select>
+
+    <!-- ===================== 성적 상세 조회 ===================== -->
+    <select id="selectGrade" parameterType="int" resultType="gradeVO">
+        SELECT
+            g.grade_id,
+            g.student_id,
+            g.subject_name,
+            g.semester,
+            g.score,
+            g.grade_point,
+            g.credit,
+            g.reg_date,
+            s.student_num,
+            s.student_name,
+            s.dept_name
+        FROM TB_GRADE g
+        INNER JOIN TB_STUDENT s ON g.student_id = s.student_id
+        WHERE g.grade_id = #{gradeId}
+    </select>
+
+    <!-- ===================== 성적 등록 ===================== -->
+    <insert id="insertGrade" parameterType="gradeVO">
+        INSERT INTO TB_GRADE (
+            student_id,
+            subject_name,
+            semester,
+            score,
+            grade_point,
+            credit,
+            reg_date
+        ) VALUES (
+            #{studentId},
+            #{subjectName},
+            #{semester},
+            #{score},
+            #{gradePoint},
+            #{credit},
+            NOW()
+        )
+    </insert>
+
+    <!-- ===================== 성적 수정 ===================== -->
+    <update id="updateGrade" parameterType="gradeVO">
+        UPDATE TB_GRADE
+        SET
+            subject_name = #{subjectName},
+            semester     = #{semester},
+            score        = #{score},
+            grade_point  = #{gradePoint},
+            credit       = #{credit}
+        WHERE grade_id = #{gradeId}
+    </update>
+
+    <!-- ===================== 성적 삭제 ===================== -->
+    <delete id="deleteGrade" parameterType="int">
+        DELETE FROM TB_GRADE WHERE grade_id = #{gradeId}
+    </delete>
+
+    <!-- ===================== 동일 과목·학기 중복 확인 ===================== -->
+    <!--
+        같은 학생이 동일 과목+학기에 이미 성적이 있으면 중복으로 판단
+        수정 시에는 자기 자신(gradeId)은 제외
+    -->
+    <select id="selectDuplicateCount" parameterType="gradeVO" resultType="int">
+        SELECT COUNT(*)
+        FROM TB_GRADE
+        WHERE student_id   = #{studentId}
+          AND subject_name = #{subjectName}
+          AND semester     = #{semester}
+        <if test="gradeId != 0">
+            AND grade_id != #{gradeId}
+        </if>
+    </select>
+
+    <!-- ===================== 학생별 평균 학점 (GPA) 자동 계산 ===================== -->
+    <!--
+        GPA = SUM(학점수 × 평점환산) / SUM(학점수)
+        평점환산: A+=4.5, A=4.0, B+=3.5, B=3.0, C+=2.5, C=2.0, D+=1.5, D=1.0, F=0.0
+    -->
+    <select id="selectGradeAvg" parameterType="int" resultType="gradeVO">
+        SELECT
+            student_id,
+            ROUND(AVG(score), 1) AS avg_score,
+            SUM(credit)          AS total_credit,
+            ROUND(
+                SUM(credit * CASE grade_point
+                    WHEN 'A+' THEN 4.5 WHEN 'A'  THEN 4.0
+                    WHEN 'B+' THEN 3.5 WHEN 'B'  THEN 3.0
+                    WHEN 'C+' THEN 2.5 WHEN 'C'  THEN 2.0
+                    WHEN 'D+' THEN 1.5 WHEN 'D'  THEN 1.0
+                    ELSE 0.0 END)
+                / NULLIF(SUM(credit), 0)
+            , 2) AS avg_grade_point
+        FROM TB_GRADE
+        WHERE student_id = #{studentId}
+    </select>
+
+    <!-- ===================== 학기 목록 (검색 드롭다운용) ===================== -->
+    <select id="selectSemesterList" resultType="String">
+        SELECT DISTINCT semester
+        FROM TB_GRADE
+        ORDER BY semester DESC
+    </select>
+
+</mapper>

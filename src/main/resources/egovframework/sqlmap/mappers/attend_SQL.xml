@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="attendSQL">
+
+    <!-- ===================== 출결 목록 조회 (페이징 + 검색) ===================== -->
+    <select id="selectAttendList" parameterType="attendVO" resultType="attendVO">
+        SELECT
+            a.attend_id,
+            a.student_id,
+            a.attend_date,
+            a.attend_status,
+            a.note,
+            a.reg_date,
+            s.student_num,
+            s.student_name,
+            s.dept_name
+        FROM TB_ATTEND a
+        INNER JOIN TB_STUDENT s ON a.student_id = s.student_id
+        WHERE s.del_yn = 'N'
+        <if test="studentId != 0">
+            AND a.student_id = #{studentId}
+        </if>
+        <if test="searchKeyword != null and searchKeyword != ''">
+            AND (s.student_name LIKE CONCAT('%', #{searchKeyword}, '%')
+              OR s.student_num  LIKE CONCAT('%', #{searchKeyword}, '%'))
+        </if>
+        <if test="searchStatus != null and searchStatus != ''">
+            AND a.attend_status = #{searchStatus}
+        </if>
+        <if test="startDate != null and startDate != ''">
+            AND a.attend_date &gt;= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND a.attend_date &lt;= #{endDate}
+        </if>
+        ORDER BY a.attend_date DESC, s.student_num ASC
+        LIMIT #{pageSize} OFFSET #{offset}
+    </select>
+
+    <!-- ===================== 출결 전체 건수 ===================== -->
+    <select id="selectAttendCount" parameterType="attendVO" resultType="int">
+        SELECT COUNT(*)
+        FROM TB_ATTEND a
+        INNER JOIN TB_STUDENT s ON a.student_id = s.student_id
+        WHERE s.del_yn = 'N'
+        <if test="studentId != 0">
+            AND a.student_id = #{studentId}
+        </if>
+        <if test="searchKeyword != null and searchKeyword != ''">
+            AND (s.student_name LIKE CONCAT('%', #{searchKeyword}, '%')
+              OR s.student_num  LIKE CONCAT('%', #{searchKeyword}, '%'))
+        </if>
+        <if test="searchStatus != null and searchStatus != ''">
+            AND a.attend_status = #{searchStatus}
+        </if>
+        <if test="startDate != null and startDate != ''">
+            AND a.attend_date &gt;= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND a.attend_date &lt;= #{endDate}
+        </if>
+    </select>
+
+    <!-- ===================== 출결 상세 조회 ===================== -->
+    <select id="selectAttend" parameterType="int" resultType="attendVO">
+        SELECT
+            a.attend_id,
+            a.student_id,
+            a.attend_date,
+            a.attend_status,
+            a.note,
+            a.reg_date,
+            s.student_num,
+            s.student_name,
+            s.dept_name
+        FROM TB_ATTEND a
+        INNER JOIN TB_STUDENT s ON a.student_id = s.student_id
+        WHERE a.attend_id = #{attendId}
+    </select>
+
+    <!-- ===================== 출결 등록 ===================== -->
+    <insert id="insertAttend" parameterType="attendVO">
+        INSERT INTO TB_ATTEND (
+            student_id,
+            attend_date,
+            attend_status,
+            note,
+            reg_date
+        ) VALUES (
+            #{studentId},
+            #{attendDate},
+            #{attendStatus},
+            #{note},
+            NOW()
+        )
+    </insert>
+
+    <!-- ===================== 출결 수정 ===================== -->
+    <update id="updateAttend" parameterType="attendVO">
+        UPDATE TB_ATTEND
+        SET
+            attend_date   = #{attendDate},
+            attend_status = #{attendStatus},
+            note          = #{note}
+        WHERE attend_id = #{attendId}
+    </update>
+
+    <!-- ===================== 출결 삭제 ===================== -->
+    <delete id="deleteAttend" parameterType="int">
+        DELETE FROM TB_ATTEND WHERE attend_id = #{attendId}
+    </delete>
+
+    <!-- ===================== 날짜+학생 중복 확인 (같은 날 중복 등록 방지) ===================== -->
+    <select id="selectDuplicateCount" parameterType="attendVO" resultType="int">
+        SELECT COUNT(*)
+        FROM TB_ATTEND
+        WHERE student_id  = #{studentId}
+          AND attend_date = #{attendDate}
+        <if test="attendId != 0">
+            AND attend_id != #{attendId}
+        </if>
+    </select>
+
+    <!-- ===================== 학생별 출석률 집계 ===================== -->
+    <!--
+        출석률 = (출석 건수 + 공결 건수) / 전체 건수 * 100
+        기간 검색 조건 적용 가능
+    -->
+    <select id="selectAttendStat" parameterType="attendVO" resultType="attendVO">
+        SELECT
+            student_id,
+            COUNT(*)                                        AS total_count,
+            SUM(CASE WHEN attend_status = '출석' THEN 1 ELSE 0 END) AS present_count,
+            SUM(CASE WHEN attend_status = '지각' THEN 1 ELSE 0 END) AS late_count,
+            SUM(CASE WHEN attend_status = '결석' THEN 1 ELSE 0 END) AS absent_count,
+            SUM(CASE WHEN attend_status = '공결' THEN 1 ELSE 0 END) AS official_count,
+            ROUND(
+                (SUM(CASE WHEN attend_status IN ('출석','공결') THEN 1 ELSE 0 END)
+                 / NULLIF(COUNT(*), 0)) * 100
+            , 1) AS attend_rate
+        FROM TB_ATTEND
+        WHERE student_id = #{studentId}
+        <if test="startDate != null and startDate != ''">
+            AND attend_date &gt;= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND attend_date &lt;= #{endDate}
+        </if>
+    </select>
+
+    <!-- ===================== 오늘 전체 출석률 (대시보드용) ===================== -->
+    <select id="selectTodayAttendRate" resultType="double">
+        SELECT
+            IFNULL(
+                ROUND(
+                    SUM(CASE WHEN attend_status IN ('출석','공결') THEN 1 ELSE 0 END)
+                    / NULLIF(COUNT(*), 0) * 100
+                , 1)
+            , 0)
+        FROM TB_ATTEND
+        WHERE attend_date = CURDATE()
+    </select>
+
+</mapper>

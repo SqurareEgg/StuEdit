@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <!-- MyBatis SqlSessionFactory -->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <!-- DataSource 주입 -->
+        <property name="dataSource" ref="dataSource"/>
+        <!-- MyBatis 전역 설정 (typeAlias 등) -->
+        <property name="configLocation"
+                  value="classpath:/egovframework/sqlmap/config/sql-mapper-config.xml"/>
+        <!-- SQL Mapper XML 위치 패턴 -->
+        <property name="mapperLocations"
+                  value="classpath:/egovframework/sqlmap/mappers/*.xml"/>
+    </bean>
+
+    <!--
+        SqlSessionTemplate: 스레드 세이프한 MyBatis 세션
+        SqlSessionDaoSupport.setSqlSessionFactory/setSqlSessionTemplate 에
+        @Autowired(required=false) 로 자동 주입됨
+    -->
+    <bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate">
+        <constructor-arg index="0" ref="sqlSessionFactory"/>
+    </bean>
+
+</beans>

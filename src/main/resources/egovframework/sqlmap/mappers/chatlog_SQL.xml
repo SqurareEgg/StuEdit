@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="chatlogSQL">
+
+    <!-- ===================== 대화 기록 저장 ===================== -->
+    <insert id="insertChatLog" parameterType="chatLogVO" useGeneratedKeys="true" keyProperty="chatId">
+        INSERT INTO TB_CHAT_LOG (
+            user_id,
+            user_message,
+            bot_response,
+            reg_date
+        ) VALUES (
+            #{userId},
+            #{userMessage},
+            #{botResponse},
+            NOW()
+        )
+    </insert>
+
+    <!-- ===================== 대화 이력 조회 (최근 20개, 시간 오름차순 반환) ===================== -->
+    <!--
+        서브쿼리로 최근 20개를 DESC로 뽑은 후,
+        외부 쿼리에서 ASC 재정렬하여 화면에서 오래된 것이 위에 오도록 반환
+    -->
+    <select id="selectChatHistory" parameterType="int" resultType="chatLogVO">
+        SELECT
+            chat_id,
+            user_id,
+            user_message,
+            bot_response,
+            reg_date
+        FROM (
+            SELECT
+                chat_id,
+                user_id,
+                user_message,
+                bot_response,
+                reg_date
+            FROM TB_CHAT_LOG
+            WHERE user_id = #{userId}
+            ORDER BY reg_date DESC
+            LIMIT 20
+        ) recent
+        ORDER BY reg_date ASC
+    </select>
+
+</mapper>

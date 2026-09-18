@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="studentSQL">
+
+    <!-- ===================== 학생 목록 조회 (페이징 + 검색) ===================== -->
+    <select id="selectStudentList" parameterType="studentVO" resultType="studentVO">
+        SELECT
+            student_id,
+            student_num,
+            student_name,
+            dept_name,
+            grade,
+            phone,
+            email,
+            gender,
+            reg_date
+        FROM TB_STUDENT
+        WHERE del_yn = 'N'
+        <if test="searchKeyword != null and searchKeyword != ''">
+            <choose>
+                <when test="searchType == 'name'">
+                    AND student_name LIKE CONCAT('%', #{searchKeyword}, '%')
+                </when>
+                <when test="searchType == 'num'">
+                    AND student_num LIKE CONCAT('%', #{searchKeyword}, '%')
+                </when>
+                <when test="searchType == 'dept'">
+                    AND dept_name LIKE CONCAT('%', #{searchKeyword}, '%')
+                </when>
+                <otherwise>
+                    AND (student_name LIKE CONCAT('%', #{searchKeyword}, '%')
+                      OR student_num  LIKE CONCAT('%', #{searchKeyword}, '%')
+                      OR dept_name    LIKE CONCAT('%', #{searchKeyword}, '%'))
+                </otherwise>
+            </choose>
+        </if>
+        ORDER BY reg_date DESC, student_id DESC
+        LIMIT #{pageSize} OFFSET #{offset}
+    </select>
+
+    <!-- ===================== 학생 전체 건수 (검색 조건 반영) ===================== -->
+    <select id="selectStudentCount" parameterType="studentVO" resultType="int">
+        SELECT COUNT(*)
+        FROM TB_STUDENT
+        WHERE del_yn = 'N'
+        <if test="searchKeyword != null and searchKeyword != ''">
+            <choose>
+                <when test="searchType == 'name'">
+                    AND student_name LIKE CONCAT('%', #{searchKeyword}, '%')
+                </when>
+                <when test="searchType == 'num'">
+                    AND student_num LIKE CONCAT('%', #{searchKeyword}, '%')
+                </when>
+                <when test="searchType == 'dept'">
+                    AND dept_name LIKE CONCAT('%', #{searchKeyword}, '%')
+                </when>
+                <otherwise>
+                    AND (student_name LIKE CONCAT('%', #{searchKeyword}, '%')
+                      OR student_num  LIKE CONCAT('%', #{searchKeyword}, '%')
+                      OR dept_name    LIKE CONCAT('%', #{searchKeyword}, '%'))
+                </otherwise>
+            </choose>
+        </if>
+    </select>
+
+    <!-- ===================== 학생 상세 조회 ===================== -->
+    <select id="selectStudent" parameterType="int" resultType="studentVO">
+        SELECT
+            student_id,
+            student_num,
+            student_name,
+            dept_name,
+            grade,
+            phone,
+            email,
+            address,
+            gender,
+            birth_date,
+            reg_date,
+            del_yn
+        FROM TB_STUDENT
+        WHERE student_id = #{studentId}
+          AND del_yn = 'N'
+    </select>
+
+    <!-- ===================== 학생 등록 ===================== -->
+    <insert id="insertStudent" parameterType="studentVO">
+        INSERT INTO TB_STUDENT (
+            student_num,
+            student_name,
+            dept_name,
+            grade,
+            phone,
+            email,
+            address,
+            gender,
+            birth_date,
+            reg_date,
+            del_yn
+        ) VALUES (
+            #{studentNum},
+            #{studentName},
+            #{deptName},
+            #{grade},
+            #{phone},
+            #{email},
+            #{address},
+            #{gender},
+            #{birthDate},
+            NOW(),
+            'N'
+        )
+    </insert>
+
+    <!-- ===================== 학생 수정 ===================== -->
+    <update id="updateStudent" parameterType="studentVO">
+        UPDATE TB_STUDENT
+        SET
+            student_name = #{studentName},
+            dept_name    = #{deptName},
+            grade        = #{grade},
+            phone        = #{phone},
+            email        = #{email},
+            address      = #{address},
+            gender       = #{gender},
+            birth_date   = #{birthDate}
+        WHERE student_id = #{studentId}
+          AND del_yn = 'N'
+    </update>
+
+    <!-- ===================== 학생 소프트삭제 (del_yn = 'Y') ===================== -->
+    <update id="deleteStudent" parameterType="int">
+        UPDATE TB_STUDENT
+        SET del_yn = 'Y'
+        WHERE student_id = #{studentId}
+    </update>
+
+    <!-- ===================== 학번 중복 확인 ===================== -->
+    <select id="selectStudentNumCount" parameterType="String" resultType="int">
+        SELECT COUNT(*)
+        FROM TB_STUDENT
+        WHERE student_num = #{studentNum}
+          AND del_yn = 'N'
+    </select>
+
+    <!-- ===================== 대시보드: 전체 학생 수 ===================== -->
+    <select id="selectTotalStudentCount" resultType="int">
+        SELECT COUNT(*) FROM TB_STUDENT WHERE del_yn = 'N'
+    </select>
+
+    <!-- ===================== 대시보드: 이번 달 신규 등록 수 ===================== -->
+    <select id="selectMonthlyNewCount" resultType="int">
+        SELECT COUNT(*)
+        FROM TB_STUDENT
+        WHERE del_yn = 'N'
+          AND DATE_FORMAT(reg_date, '%Y-%m') = DATE_FORMAT(NOW(), '%Y-%m')
+    </select>
+
+    <!-- ===================== 대시보드: 학과별 학생 현황 ===================== -->
+    <select id="selectDeptStatList" resultType="studentVO">
+        SELECT
+            dept_name,
+            COUNT(*) AS student_count,
+            ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM TB_STUDENT WHERE del_yn = 'N'), 1) AS ratio
+        FROM TB_STUDENT
+        WHERE del_yn = 'N'
+        GROUP BY dept_name
+        ORDER BY student_count DESC
+    </select>
+
+    <!-- ===================== 대시보드: 최근 등록 학생 5명 ===================== -->
+    <select id="selectRecentStudentList" resultType="studentVO">
+        SELECT
+            student_id,
+            student_num,
+            student_name,
+            dept_name,
+            reg_date
+        FROM TB_STUDENT
+        WHERE del_yn = 'N'
+        ORDER BY reg_date DESC, student_id DESC
+        LIMIT 5
+    </select>
+
+    <!-- ===================== 엑셀 다운로드용: 전체 학생 목록 (페이징 없음) ===================== -->
+    <select id="selectStudentListAll" parameterType="studentVO" resultType="studentVO">
+        SELECT
+            student_id,
+            student_num,
+            student_name,
+            dept_name,
+            grade,
+            phone,
+            email,
+            gender,
+            reg_date
+        FROM TB_STUDENT
+        WHERE del_yn = 'N'
+        <if test="searchKeyword != null and searchKeyword != ''">
+            <choose>
+                <when test="searchType == 'name'">
+                    AND student_name LIKE CONCAT('%', #{searchKeyword}, '%')
+                </when>
+                <when test="searchType == 'num'">
+                    AND student_num LIKE CONCAT('%', #{searchKeyword}, '%')
+                </when>
+                <when test="searchType == 'dept'">
+                    AND dept_name LIKE CONCAT('%', #{searchKeyword}, '%')
+                </when>
+                <otherwise>
+                    AND (student_name LIKE CONCAT('%', #{searchKeyword}, '%')
+                      OR student_num  LIKE CONCAT('%', #{searchKeyword}, '%')
+                      OR dept_name    LIKE CONCAT('%', #{searchKeyword}, '%'))
+                </otherwise>
+            </choose>
+        </if>
+        ORDER BY reg_date DESC, student_id DESC
+    </select>
+
+</mapper>

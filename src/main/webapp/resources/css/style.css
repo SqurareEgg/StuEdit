@@ -1,0 +1,92 @@
+/* StuEdit 공통 스타일 */
+
+/* ── 레이아웃 ── */
+body {
+    font-size: 0.9rem;
+    background-color: #f8f9fa;
+}
+
+/* 사이드바 고정 */
+#sidebar {
+    position: fixed;
+    top: 56px;      /* 헤더 높이 */
+    bottom: 0;
+    left: 0;
+    z-index: 100;
+    overflow-y: auto;
+    border-right: 1px solid #dee2e6;
+}
+
+/* 본문: 사이드바 너비만큼 왼쪽 여백 */
+main {
+    margin-top: 0;
+}
+
+/* ── 사이드바 메뉴 ── */
+.sidebar .nav-link {
+    font-weight: 500;
+    padding: 0.4rem 1rem;
+    border-radius: 0.25rem;
+    transition: background-color 0.15s ease;
+}
+.sidebar .nav-link:hover {
+    background-color: #e9ecef;
+}
+.sidebar .nav-link.active {
+    color: #0d6efd !important;
+    background-color: #e7f1ff;
+}
+.sidebar-heading {
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+}
+
+/* ── 카드 ── */
+.card {
+    border-radius: 0.5rem;
+}
+
+/* ── 테이블 ── */
+.table th {
+    font-size: 0.82rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.table td {
+    vertical-align: middle;
+    font-size: 0.88rem;
+}
+
+/* ── 페이징 ── */
+.pagination .page-link {
+    font-size: 0.85rem;
+}
+
+/* ── 검색 폼 ── */
+.search-box {
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+}
+
+/* ── 배지 ── */
+.badge {
+    font-size: 0.75rem;
+}
+
+/* ── 푸터 ── */
+.footer {
+    position: relative;
+    bottom: 0;
+    width: 100%;
+}
+
+/* ── 반응형: 모바일에서 사이드바 숨김 ── */
+@media (max-width: 767.98px) {
+    #sidebar {
+        position: relative;
+        top: 0;
+    }
+}
